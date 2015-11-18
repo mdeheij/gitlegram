@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bartholdbos/Golegram"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
+	//"os/exec"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 )
 
@@ -41,13 +43,15 @@ type Webhook struct {
 
 //ConfigRepository represents a repository from the config file
 type ConfigRepository struct {
-	Name     string
-	Commands []string
+	Name           string
+	Telegramtarget int32
+	Commands       []string
 }
 
 //Config represents the config file
 type Config struct {
 	Logfile      string
+	Bot          string
 	Address      string
 	Port         int64
 	Repositories []ConfigRepository
@@ -118,7 +122,6 @@ func loadConfig(configFile string) Config {
 	var file, err = os.Open(configFile)
 	PanicIf(err)
 
-	// close file on exit and check for its returned error
 	defer func() {
 		err := file.Close()
 		PanicIf(err)
@@ -137,7 +140,6 @@ func loadConfig(configFile string) Config {
 }
 
 func hookHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Hoek!")
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println(r)
@@ -145,32 +147,39 @@ func hookHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var hook Webhook
-
 	//read request body
 	var data, err = ioutil.ReadAll(r.Body)
 	PanicIf(err, "while reading request")
 
-	fmt.Println(string(data))
+	//fmt.Println(string(data))
 	//unmarshal request body
 
 	err = json.Unmarshal(data, &hook)
 	PanicIf(err, "while unmarshaling request")
 
+	fmt.Println(hook)
+
 	//find matching config for repository name
 	for _, repo := range config.Repositories {
+
 		if repo.Name != hook.Repository.Name {
 			continue
 		}
+		bot, _ := Golegram.NewBot(config.Bot)
+		//our beautiful git push sticker
+		bot.SendSticker(repo.Telegramtarget, "BQADBAADjgEAAlIvPQAB7_h8b5RYj3sC")
 
-		//execute commands for repository
-		for _, cmd := range repo.Commands {
-			var command = exec.Command(cmd)
-			err = command.Run()
-			if err != nil {
-				log.Println(err)
-			} else {
-				log.Println("Executed: " + cmd)
-			}
+		//find out which branch by replacing with nothing
+		branch := strings.Replace(hook.Ref, "refs/heads/", "", -1) //doe iets wegstrippen later
+		announceMsg := "➡️ " + hook.User_name + " pushed to " + branch + " of IS203-4"
+		_, _ = bot.SendMessage(repo.Telegramtarget, announceMsg)
+
+		for _, commit := range hook.Commits { //for each commit in our received json, show a seperate message
+			msg := "➕ " + commit.Message
+			msg += " (" + commit.Author.Name
+			msg += ")"
+			fmt.Println(msg)
+			_, _ = bot.SendMessage(repo.Telegramtarget, msg)
 		}
 	}
 

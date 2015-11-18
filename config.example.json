@@ -1,20 +1,16 @@
 {
   "logfile": "log.log",
+  "bot": "TELEGRAMBOTTOKENHERE",
   "address": "0.0.0.0",
   "port": 3344,
   "repositories": [
     {
-      "name": "foo",
-      "commands": [
-        "/home/bar/deploy.sh",
-        "/home/bar/cleanup.sh"
-      ]
+      "name": "FULL REPO NAME 1",
+      "telegramtarget": 1337
     },
     {
-      "name": "foobar",
-      "commands": [
-        "/usr/bin/true"
-      ]
+      "name": "FULL REPO NAME 1",
+      "telegramtarget": -9001
     }
   ]
 }
