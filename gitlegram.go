@@ -150,8 +150,9 @@ func hookHandler(w http.ResponseWriter, r *http.Request) {
 	var data, err = ioutil.ReadAll(r.Body)
 	PanicIf(err, "while reading request")
 
-	fmt.Println(data)
+	fmt.Println(string(data))
 	//unmarshal request body
+
 	err = json.Unmarshal(data, &hook)
 	PanicIf(err, "while unmarshaling request")
 
