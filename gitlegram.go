@@ -4,41 +4,56 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bartholdbos/Golegram"
+	"github.com/bartholdbos/golegram"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	//"os/exec"
 	"os/signal"
 	"strconv"
 	"strings"
 	"syscall"
 )
 
-//GitlabRepository represents repository information from the webhook
-type GitlabRepository struct {
-	Name, Url, Description, Home string
+//Repository represents repository information from the webhook
+type Repository struct {
+	Name        string
+	Url         string
+	Description string
+	Home        string
 }
 
 //Commit represents commit information from the webhook
 type Commit struct {
-	Id, Message, Timestamp, Url string
-	Author                      Author
+	Id        string
+	Message   string
+	Timestamp string
+	Url       string
+	Author    Author
 }
 
 //Author represents author information from the webhook
 type Author struct {
-	Name, Email string
+	Name  string
+	Email string
 }
 
 //Webhook represents push information from the webhook
 type Webhook struct {
 	Before, After, Ref, User_name string
 	User_id, Project_id           int
-	Repository                    GitlabRepository
+	Repository                    Repository
 	Commits                       []Commit
 	Total_commits_count           int
+}
+
+//Config struct represents the config filé
+type Config struct {
+	Logfile      string
+	Bot          string
+	Address      string
+	Port         int64
+	Repositories []ConfigRepository
 }
 
 //ConfigRepository represents a repository from the config file
@@ -46,15 +61,6 @@ type ConfigRepository struct {
 	Name           string
 	Telegramtarget int32
 	Commands       []string
-}
-
-//Config represents the config file
-type Config struct {
-	Logfile      string
-	Bot          string
-	Address      string
-	Port         int64
-	Repositories []ConfigRepository
 }
 
 func PanicIf(err error, what ...string) {
@@ -69,54 +75,6 @@ func PanicIf(err error, what ...string) {
 
 var config Config
 var configFile string
-
-func main() {
-	args := os.Args
-
-	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc, syscall.SIGHUP)
-
-	go func() {
-		<-sigc
-		config = loadConfig(configFile)
-		log.Println("config reloaded")
-	}()
-
-	//if we have a "real" argument we take this as conf path to the config file
-	if len(args) > 1 {
-		configFile = args[1]
-	} else {
-		configFile = "config.json"
-	}
-
-	//load config
-	config := loadConfig(configFile)
-
-	//open log file
-	writer, err := os.OpenFile(config.Logfile, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
-	PanicIf(err)
-
-	//close logfile on exit
-	defer func() {
-		writer.Close()
-	}()
-
-	//setting logging output
-	log.SetOutput(writer)
-
-	//setting handler
-	http.HandleFunc("/", hookHandler)
-
-	address := config.Address + ":" + strconv.FormatInt(config.Port, 10)
-
-	log.Println("Listening on " + address)
-
-	//starting server
-	err = http.ListenAndServe(address, nil)
-	if err != nil {
-		log.Println(err)
-	}
-}
 
 func loadConfig(configFile string) Config {
 	var file, err = os.Open(configFile)
@@ -137,6 +95,47 @@ func loadConfig(configFile string) Config {
 	PanicIf(err)
 
 	return config
+}
+
+func main() {
+	args := os.Args
+
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, syscall.SIGHUP)
+
+	go func() {
+		<-sigc
+		config = loadConfig(configFile)
+		log.Println("config reloaded")
+	}()
+
+	//if we have a "real" argument we take this as conf path to the config file
+	if len(args) > 1 {
+		configFile = args[1]
+	} else {
+		configFile = "config.json"
+	}
+
+	config := loadConfig(configFile)
+	writer, err := os.OpenFile(config.Logfile, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
+	PanicIf(err)
+
+	//close logfile on exit
+	defer func() {
+		writer.Close()
+	}()
+
+	log.SetOutput(writer)
+	http.HandleFunc("/", hookHandler)
+
+	address := config.Address + ":" + strconv.FormatInt(config.Port, 10)
+	log.Println("Listening on " + address)
+
+	//starting server
+	err = http.ListenAndServe(address, nil)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func hookHandler(w http.ResponseWriter, r *http.Request) {
