@@ -1,16 +1,15 @@
 {
-  "logfile": "dagboek.log",
-  "bot": "TELEGRAMBOTTOKENHERE",
+  "bottoken": "9001:asdfasdsfadsfasdfda",
   "address": "0.0.0.0",
-  "port": 7331,
+  "port": 2201,
   "repositories": [
     {
-      "name": "FULL REPO NAME 1",
+      "clone_url": "https://github.com/torvalds/linux.git",
       "telegramtarget": 1337
     },
     {
-      "name": "FULL REPO NAME 1",
-      "telegramtarget": -9001
+      "clone_url": "https://github.com/mdeheij/gitlegram.git",
+      "telegramtarget": 9001
     }
   ]
 }

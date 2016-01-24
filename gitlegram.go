@@ -3,9 +3,8 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/bartholdbos/golegram"
-	"io/ioutil"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"os"
@@ -21,21 +20,27 @@ type Repository struct {
 	Url         string
 	Description string
 	Home        string
+	Ssh_url     string
+	Clone_url   string
+	Full_name   string
+	Website     string
+	Owner       Author
 }
 
 //Commit represents commit information from the webhook
 type Commit struct {
 	Id        string
 	Message   string
-	Timestamp string
+	Timestamp string //gitlab and github (not gogs)
 	Url       string
 	Author    Author
 }
 
 //Author represents author information from the webhook
 type Author struct {
-	Name  string
-	Email string
+	Name     string
+	Email    string
+	Username string //gogs
 }
 
 //Webhook represents push information from the webhook
@@ -45,12 +50,12 @@ type Webhook struct {
 	Repository                    Repository
 	Commits                       []Commit
 	Total_commits_count           int
+	Pusher                        Author
 }
 
 //Config struct represents the config filé
 type Config struct {
-	Logfile      string
-	Bot          string
+	Bottoken     string
 	Address      string
 	Port         int64
 	Repositories []ConfigRepository
@@ -58,7 +63,7 @@ type Config struct {
 
 //ConfigRepository represents a repository from the config file
 type ConfigRepository struct {
-	Name           string
+	Clone_url      string
 	Telegramtarget int32
 	Commands       []string
 }
@@ -97,89 +102,70 @@ func loadConfig(configFile string) Config {
 	return config
 }
 
+func processWebhook(wh Webhook) {
+
+	bot, _ := golegram.NewBot(config.Bottoken)
+	//our beautiful git push sticker
+	// nope
+	//bot.SendSticker(4009810, "BQADBAADjgEAAlIvPQAB7_h8b5RYj3sC")
+	gitSystem := "gogs"
+
+	if len(wh.Repository.Full_name) > 0 {
+		gitSystem = "github"
+	}
+
+	var fullRepo string
+
+	if gitSystem == "github" {
+		fullRepo = wh.Repository.Full_name
+	} else {
+		fullRepo = wh.Repository.Owner.Username + "/" + wh.Repository.Name
+	}
+
+	for _, repo := range config.Repositories {
+
+		if repo.Clone_url != wh.Repository.Clone_url {
+			continue
+		}
+		branch := strings.Replace(wh.Ref, "refs/heads/", "", -1) //doe iets wegstrippen later
+
+		announceMsg := "⬆️ " + wh.Pusher.Name + " pushed to _" + branch + "_ of _" + fullRepo + "_"
+
+		_, _ = bot.SendMessage(repo.Telegramtarget, announceMsg)
+
+		for _, commit := range wh.Commits { //for each commit in our received json, show a seperate message
+			msg := "➕ [" + commit.Message + "](" + commit.Url + ")\n"
+			msg += "👤 " + commit.Author.Name
+			msg += ""
+			_, _ = bot.SendMessage(repo.Telegramtarget, msg)
+		}
+	}
+}
+
 func main() {
-	args := os.Args
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.Default()
 
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, syscall.SIGHUP)
-
 	go func() {
 		<-sigc
 		config = loadConfig(configFile)
 		log.Println("config reloaded")
 	}()
 
-	//if we have a "real" argument we take this as conf path to the config file
-	if len(args) > 1 {
-		configFile = args[1]
-	} else {
-		configFile = "config.json"
-	}
+	config := loadConfig("config.json")
 
-	config := loadConfig(configFile)
-	writer, err := os.OpenFile(config.Logfile, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
-	PanicIf(err)
+	r.POST("/", func(c *gin.Context) {
+		var json Webhook
+		if c.BindJSON(&json) == nil {
+			processWebhook(json)
+			c.String(http.StatusOK, "Ok.")
+		} else {
+			c.String(401, "Nope.")
+		}
 
-	//close logfile on exit
-	defer func() {
-		writer.Close()
-	}()
-
-	log.SetOutput(writer)
-	http.HandleFunc("/", hookHandler)
-
+	})
 	address := config.Address + ":" + strconv.FormatInt(config.Port, 10)
-	log.Println("Listening on " + address)
-
-	//starting server
-	err = http.ListenAndServe(address, nil)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-func hookHandler(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println(r)
-		}
-	}()
-
-	var hook Webhook
-	//read request body
-	var data, err = ioutil.ReadAll(r.Body)
-	PanicIf(err, "while reading request")
-
-	//fmt.Println(string(data))
-	//unmarshal request body
-
-	err = json.Unmarshal(data, &hook)
-	PanicIf(err, "while unmarshaling request")
-
-	fmt.Println(hook)
-
-	//find matching config for repository name
-	for _, repo := range config.Repositories {
-
-		if repo.Name != hook.Repository.Name {
-			continue
-		}
-		bot, _ := Golegram.NewBot(config.Bot)
-		//our beautiful git push sticker
-		bot.SendSticker(repo.Telegramtarget, "BQADBAADjgEAAlIvPQAB7_h8b5RYj3sC")
-
-		//find out which branch by replacing with nothing
-		branch := strings.Replace(hook.Ref, "refs/heads/", "", -1) //doe iets wegstrippen later
-		announceMsg := "➡️ " + hook.User_name + " pushed to " + branch + " of IS203-4"
-		_, _ = bot.SendMessage(repo.Telegramtarget, announceMsg)
-
-		for _, commit := range hook.Commits { //for each commit in our received json, show a seperate message
-			msg := "➕ " + commit.Message
-			msg += " (" + commit.Author.Name
-			msg += ")"
-			fmt.Println(msg)
-			_, _ = bot.SendMessage(repo.Telegramtarget, msg)
-		}
-	}
-
+	r.Run(address)
 }

@@ -1,6 +1,6 @@
 gitlegram
 =================
 
-A GitLab webhook with a Telegram library, written in Go
+A GitLab, Gogs and Github webhook with a Telegram library, written in Go
 
-Soon with Gogs and Github support. All in one.
+Tested with Gogs and Github. 
