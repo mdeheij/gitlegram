@@ -64,7 +64,7 @@ type Config struct {
 //ConfigRepository represents a repository from the config file
 type ConfigRepository struct {
 	Clone_url      string
-	Telegramtarget int32
+	Telegramtarget string
 	Commands       []string
 }
 
@@ -107,7 +107,7 @@ func processWebhook(wh Webhook) {
 	bot, _ := golegram.NewBot(config.Bottoken)
 	//our beautiful git push sticker
 	// nope
-	//bot.SendSticker(4009810, "BQADBAADjgEAAlIvPQAB7_h8b5RYj3sC")
+	//bot.SendSticker(userID, "BQADBAADjgEAAlIvPQAB7_h8b5RYj3sC")
 	gitSystem := "gogs"
 
 	if len(wh.Repository.Full_name) > 0 {
