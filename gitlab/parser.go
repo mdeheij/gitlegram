@@ -1,13 +1,16 @@
 package gitlab
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+)
 
-func Parse(jsonBody string) (r Request) {
+func Parse(jsonBody string) (r Request, err error) {
+	err = json.Unmarshal([]byte(jsonBody), &r)
 
-	err := json.Unmarshal([]byte(jsonBody), &r)
-	if err != nil {
-		panic(err)
+	if !r.IsValid() {
+		return r, errors.New("Request invalid or unsupported")
 	}
 
-	return r
+	return r, err
 }
