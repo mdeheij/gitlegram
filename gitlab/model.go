@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"errors"
 	"time"
 
 	"github.com/mdeheij/gitlegram/interfaces"
@@ -65,6 +66,17 @@ func (r *Request) IsValid() bool {
 
 func (r Request) GetRepository() interfaces.RepositoryInterface {
 	return r.Repository
+}
+func (r Request) GetUser() (User, error) {
+	if r.ObjectKind == "push" {
+		return User{
+			Username:  r.UserUsername,
+			Name:      r.UserName,
+			AvatarURL: r.UserAvatar,
+		}, nil
+	}
+
+	return User{}, errors.New("Could not fetch user data from request")
 }
 func (r Repository) GetName() string {
 	return r.Name
