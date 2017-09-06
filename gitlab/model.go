@@ -1,5 +1,7 @@
 package gitlab
 
+import "time"
+
 type Project struct {
 	Name              string `json:"name"`
 	Description       string `json:"description"`
@@ -63,14 +65,14 @@ type Author struct {
 }
 
 type Commit struct {
-	ID        string   `json:"id"`
-	Message   string   `json:"message"`
-	Timestamp string   `json:"timestamp"`
-	URL       string   `json:"url"`
-	Author    Author   `json:"author"`
-	Added     []string `json:"added"`
-	Modified  []string `json:"modified"`
-	Removed   []string `json:"removed"`
+	ID        string    `json:"id"`
+	Message   string    `json:"message"`
+	Timestamp time.Time `json:"timestamp"`
+	URL       string    `json:"url"`
+	Author    Author    `json:"author"`
+	Added     []string  `json:"added"`
+	Modified  []string  `json:"modified"`
+	Removed   []string  `json:"removed"`
 }
 
 type IssueHook struct {
@@ -90,8 +92,8 @@ type ObjectAttributes struct {
 	AssigneeID  int         `json:"assignee_id"`
 	AuthorID    int         `json:"author_id"`
 	ProjectID   int         `json:"project_id"`
-	CreatedAt   string      `json:"created_at"` //TODO: time.Time
-	UpdatedAt   string      `json:"updated_at"` //TODO: time.Time
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
 	Position    int         `json:"position"`
 	BranchName  interface{} `json:"branch_name"`
 	Description string      `json:"description"`
@@ -113,14 +115,14 @@ type Assignee struct {
 }
 
 type Label struct {
-	ID          int    `json:"id"`
-	Title       string `json:"title"`
-	Color       string `json:"color"`
-	ProjectID   int    `json:"project_id"`
-	CreatedAt   string `json:"created_at"` //TODO: time.Time
-	UpdatedAt   string `json:"updated_at"` //TODO: time.Time
-	Template    bool   `json:"template"`
-	Description string `json:"description"`
-	Type        string `json:"type"`
-	GroupID     int    `json:"group_id"`
+	ID          int       `json:"id"`
+	Title       string    `json:"title"`
+	Color       string    `json:"color"`
+	ProjectID   int       `json:"project_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Template    bool      `json:"template"`
+	Description string    `json:"description"`
+	Type        string    `json:"type"`
+	GroupID     int       `json:"group_id"`
 }

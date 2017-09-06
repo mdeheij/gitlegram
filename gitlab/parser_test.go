@@ -3,6 +3,7 @@ package gitlab
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 var gitlabPushRequest = `{
@@ -74,6 +75,10 @@ var gitlabPushRequest = `{
 }`
 
 func GitlabSamplePushRequest() Request {
+	str := "2011-12-12T14:27:31+02:00"
+	t1, _ := time.Parse(time.RFC3339, str)
+	t2, _ := time.Parse(time.RFC3339, "2012-01-03T23:36:29+02:00")
+
 	return Request{
 		ObjectKind:   "push",
 		Before:       "95790bf891e76fee5e1747ab589903a6a1f80f22",
@@ -114,7 +119,7 @@ func GitlabSamplePushRequest() Request {
 			Commit{
 				ID:        "b6568db1bc1dcd7f8b4d5a946b0b91f9dacd7327",
 				Message:   "Update Catalan translation to e38cb41.",
-				Timestamp: "2011-12-12T14:27:31+02:00",
+				Timestamp: t1,
 				URL:       "http://example.com/mike/diaspora/commit/b6568db1bc1dcd7f8b4d5a946b0b91f9dacd7327",
 				Author: Author{
 					Name:  "Jordi Mallach",
@@ -127,7 +132,7 @@ func GitlabSamplePushRequest() Request {
 			Commit{
 				ID:        "da1560886d4f094c3e6c9ef40349f7d38b5d27d7",
 				Message:   "fixed readme",
-				Timestamp: "2012-01-03T23:36:29+02:00",
+				Timestamp: t2,
 				URL:       "http://example.com/mike/diaspora/commit/da1560886d4f094c3e6c9ef40349f7d38b5d27d7",
 				Author: Author{
 					Name:  "GitLab dev user",
