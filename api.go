@@ -17,7 +17,7 @@ func main() {
 	r.POST("/", func(c *gin.Context) {
 		body, ioerr := ioutil.ReadAll(c.Request.Body)
 		if ioerr != nil {
-			c.String(500, "Could not read request body")
+			c.String(400, "Could not read request body")
 			log.Critical(ioerr)
 			return
 		}
@@ -25,7 +25,7 @@ func main() {
 		//TODO: Request can be ambiguous
 		request, err := gitlab.Parse(string(body))
 		if err != nil {
-			c.String(500, "Could not parse request body")
+			c.String(400, "Could not parse request body")
 			log.Critical(err)
 			return
 		}
