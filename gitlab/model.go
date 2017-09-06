@@ -1,7 +1,5 @@
 package gitlab
 
-//Currently supported: push, tag_push, issue
-
 type Project struct {
 	Name              string `json:"name"`
 	Description       string `json:"description"`
@@ -44,6 +42,19 @@ type Request struct {
 	Repository        Repository `json:"repository"`
 	Commits           []Commit   `json:"commits"`
 	TotalCommitsCount int        `json:"total_commits_count"`
+}
+
+//currently supported request types (object kinds)
+var supportedObjectKinds = []string{"push", "tag_push"}
+
+//IsValid returns true if it seems like a valid request
+func (r *Request) IsValid() bool {
+	for _, b := range supportedObjectKinds {
+		if b == r.ObjectKind {
+			return true
+		}
+	}
+	return false
 }
 
 type Author struct {
