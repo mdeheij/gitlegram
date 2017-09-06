@@ -1,6 +1,10 @@
 package gitlab
 
-import "time"
+import (
+	"time"
+
+	"github.com/mdeheij/gitlegram/interfaces"
+)
 
 type Project struct {
 	Name              string `json:"name"`
@@ -57,6 +61,13 @@ func (r *Request) IsValid() bool {
 		}
 	}
 	return false
+}
+
+func (r Request) GetRepository() interfaces.RepositoryInterface {
+	return r.Repository
+}
+func (r Repository) GetName() string {
+	return r.Name
 }
 
 type Author struct {

@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/bartholdbos/golegram"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"os"
@@ -12,42 +10,16 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/bartholdbos/golegram"
+	"github.com/gin-gonic/gin"
 )
-
-//Repository represents repository information from the webhook
-type Repository struct {
-	Name        string
-	Url         string
-	Description string
-	Home        string
-	Ssh_url     string
-	Clone_url   string
-	Full_name   string
-	Website     string
-	Owner       Author
-}
-
-//Commit represents commit information from the webhook
-type Commit struct {
-	Id        string
-	Message   string
-	Timestamp string //gitlab and github (not gogs)
-	Url       string
-	Author    Author
-}
-
-//Author represents author information from the webhook
-type Author struct {
-	Name     string
-	Email    string
-	Username string //gogs
-}
 
 //Webhook represents push information from the webhook
 type Webhook struct {
 	Before, After, Ref, User_name string
 	User_id, Project_id           int
-	Repository                    Repository
+	Repository                    RepositoryInterface
 	Commits                       []Commit
 	Total_commits_count           int
 	Pusher                        Author
@@ -81,6 +53,7 @@ func PanicIf(err error, what ...string) {
 var config Config
 var configFile string
 
+//TODO: toml instead of json
 func loadConfig(configFile string) Config {
 	var file, err = os.Open(configFile)
 	PanicIf(err)
