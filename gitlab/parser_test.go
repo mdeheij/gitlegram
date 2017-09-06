@@ -147,17 +147,28 @@ func TestParse(t *testing.T) {
 		jsonBody string
 	}
 	tests := []struct {
-		name  string
-		args  args
-		wantR Request
+		name    string
+		args    args
+		wantR   Request
+		wantErr bool
 	}{
-		{"push", args{jsonBody: gitlabPushRequest}, GitlabSamplePushRequest()},
+		{"push_sample", args{jsonBody: gitlabPushRequest}, GitlabSamplePushRequest(), false},
+		{"push_syntax_error", args{jsonBody: "garbage"}, Request{}, true},
+		{"push_empty", args{jsonBody: "{}"}, Request{}, true},
+		{"push_incomplete", args{jsonBody: `{"user_id": 4}`}, Request{UserID: 4}, true},
+		{"push_unsupported", args{jsonBody: `{"user_id": 4, "object_kind": "build"}`}, Request{UserID: 4, ObjectKind: "build"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotR := Parse(tt.args.jsonBody); !reflect.DeepEqual(gotR, tt.wantR) {
+			gotR, err := Parse(tt.args.jsonBody)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, tt.wantR) {
 				t.Errorf("Parse() = %v, want %v", gotR, tt.wantR)
 			}
+
 		})
 	}
 }
