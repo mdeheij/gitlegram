@@ -67,7 +67,7 @@ func (r *Request) IsValid() bool {
 func (r Request) GetRepository() interfaces.RepositoryInterface {
 	return r.Repository
 }
-func (r Request) GetUser() (User, error) {
+func (r Request) GetUser() (interfaces.UserInterface, error) {
 	if r.ObjectKind == "push" {
 		return User{
 			Username:  r.UserUsername,
@@ -131,6 +131,16 @@ type User struct {
 	Name      string `json:"name"`
 	Username  string `json:"username"`
 	AvatarURL string `json:"avatar_url"`
+}
+
+func (u User) GetUsername() string {
+	return u.Username
+}
+func (u User) GetName() string {
+	return u.Name
+}
+func (u User) GetAvatarURL() string {
+	return u.AvatarURL
 }
 
 type Assignee struct {
