@@ -23,6 +23,7 @@ func main() {
 		}
 
 		//TODO: Request can be ambiguous
+		//TODO: move this code to seperate func
 		request, err := gitlab.Parse(string(body))
 		if err != nil {
 			c.String(400, "Could not parse request body")
