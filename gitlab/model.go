@@ -64,10 +64,10 @@ func (r *Request) IsValid() bool {
 	return false
 }
 
-func (r Request) GetRepository() interfaces.RepositoryInterface {
+func (r Request) GetRepository() interfaces.Repository {
 	return r.Repository
 }
-func (r Request) GetUser() (interfaces.UserInterface, error) {
+func (r Request) GetUser() (interfaces.User, error) {
 	if r.ObjectKind == "push" {
 		return User{
 			Username:  r.UserUsername,
