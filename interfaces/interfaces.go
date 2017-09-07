@@ -1,14 +1,14 @@
 package interfaces
 
-type RequestInterface interface {
-	GetRepository() RepositoryInterface
-	GetUser() (UserInterface, error)
+type Request interface {
+	GetRepository() Repository
+	GetUser() (User, error)
 }
 
-type RepositoryInterface interface {
+type Repository interface {
 	GetName() string
 }
-type UserInterface interface {
+type User interface {
 	GetUsername() string
 	GetName() string
 	GetAvatarURL() string
